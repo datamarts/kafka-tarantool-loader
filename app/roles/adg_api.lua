@@ -428,42 +428,17 @@ end
 
 -- luacheck: no unused args
 local function executeSelect(query, params)
-    local schema = cartridge.get_schema()
     local has_err, parser_res = pcall(
-            function()
-                return box.func["sql_parser.parse_sql"]:call({ query, schema, vshard.router.bucket_count() })
-            end
+        function()
+            return box.func["sbroad.execute_query"]:call({ query })
+        end
     )
 
     if has_err == false then
         return nil, parser_res
     end
 
-    local result = nil
-    for _, rec in pairs(parser_res) do
-        local bucket_id = rec[1]
-        local shard_query = rec[2]
-
-        local res, err = err_vshard_router:pcall(
-                vshard.router.call,
-                bucket_id,
-                "read",
-                "execute_sql",
-                { shard_query }
-        )
-
-        if err ~= nil then
-            return nil, err
-        end
-
-        if result == nil then
-            result = res
-        else
-            result.rows = misc_utils.append_table(result.rows, res.rows)
-        end
-    end
-
-    return result
+    return parser_res
 end
 
 local function executeDDL(query, params)
@@ -1055,7 +1030,9 @@ local function init(opts)
     init_ddl_routes()
 
     if opts.is_master then
-        box.schema.func.create('sql_parser.parse_sql', { if_not_exists = true, language = 'C' })
+        box.schema.func.create('sbroad.invalidate_caching_schema', { if_not_exists = true, language = 'C' })
+        box.schema.func.create('sbroad.calculate_bucket_id', { if_not_exists = true, language = 'C' })
+        box.schema.func.create('sbroad.execute_query', { if_not_exists = true, language = 'C' })
     end
 
     return true
@@ -1083,11 +1060,14 @@ local function apply_config(conf, opts)
     error_repository.init_error_repo("en")
     success_repository.init_success_repo("en")
     if opts.is_master and pcall(vshard.storage.info) == false then
+
         schema_utils.drop_all()
         if conf.schema ~= nil then
             sql_insert.install_triggers()
         end
     end
+
+    box.func["sbroad.invalidate_caching_schema"]:call({})
     return true
 end
 

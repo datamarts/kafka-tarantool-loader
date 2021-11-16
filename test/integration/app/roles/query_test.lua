@@ -20,7 +20,18 @@ local t = require("luatest")
 local g1 = t.group("new_query")
 
 local helper = require("test.helper.integration")
+local file_utils = require("app.utils.file_utils")
+local yaml = require("yaml")
+
 local cluster = helper.cluster
+
+g1.before_all(
+    function ()
+        local c = cluster:download_config()
+        c.schema = yaml.decode(file_utils.read_file("test/integration/data/schema_ddl.yml"))
+        cluster:upload_config(c)
+    end
+)
 
 g1.before_each(
         function()
@@ -52,7 +63,7 @@ g1.test_incorrect_query = function()
     local _, err = api:call("query", { [[SELECT * FROM EMPLOYEES_TRANSFER as "a"
             INNER JOIN EMPLOYEES_HIST as "b" ON "a"."id" = "b"."a_id"
         WHERE "id" = 5 and "name" = '123']] })
-    t.assert_equals(err, "query wasn't s implemented")
+    t.assert_equals(err, "query wasn't implemented")
 end
 
 g1.test_simple_query = function()
@@ -90,7 +101,7 @@ g1.test_simple_query = function()
             {name = "bucket_id", type = "unsigned"},
         },
         rows = {
-            { 1, 1, 1, 1, "123", "123", "123", 100, 3939 }
+            { 1, 1, 1, 1, "123", "123", "123", 100, 3940 }
         },
     })
 
@@ -111,8 +122,8 @@ g1.test_simple_query = function()
             { name = "bucket_id", type = "unsigned" },
         },
         rows = {
-            { 1, "123", "123", "123", 100, 3939 },
-            { 1, "123", "1000", "1000", 5000, 3939 }
+            { 1, "123", "123", "123", 100, 3940 },
+            { 1, "123", "1000", "1000", 5000, 3940 }
         },
     })
 
@@ -138,8 +149,8 @@ g1.test_union_query = function()
             { name = "bucket_id", type = "unsigned" },
         },
         rows = {
-            { 1, "123", "123", "123", 100, 3939 },
-            { 1, "123", "1000", "1000", 5000, 3939 }
+            { 1, "123", "123", "123", 100, 3940 },
+            { 1, "123", "1000", "1000", 5000, 3940 }
         },
     })
 
