@@ -475,6 +475,10 @@ local function init(opts)
     local httpd = cartridge.service_get("httpd")
     httpd:route({ method = "GET", path = "/metrics" }, prometheus.collect_http)
 
+    if opts.is_master then
+        box.schema.func.create('sbroad.calculate_bucket_id', { if_not_exists = true, language = 'C' })
+    end
+
     return true
 end
 
