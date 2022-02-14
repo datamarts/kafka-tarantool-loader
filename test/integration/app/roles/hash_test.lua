@@ -24,21 +24,21 @@ local cluster = helper.cluster
 
 
 g1.test_new_query = function()
-    local api = cluster:server("master-1-1").net_box
+    local api = cluster:server("api-1").net_box
 
     -- luacheck: max line length 200
     local r, err = api:eval('local route_utils = require("app.utils.route_utils"); return route_utils.get_bucket_id("EMPLOYEES_HOT", { 1, 1, "123", "123", "123", 100, 0, 100 }, 30000)')
     t.assert_equals(err, nil)
-    t.assert_equals(r, 3939)
+    t.assert_equals(r, 3940)
 
     -- luacheck: max line length 200
     r, err = api:eval('local route_utils = require("app.utils.route_utils"); return route_utils.get_bucket_id("hash_testing", { 1, "222", 10, 1 }, 30000)')
     t.assert_equals(err, nil)
-    t.assert_equals(r, 2926)
+    t.assert_equals(r, 2927)
 
     -- luacheck: max line length 200
     r, err = api:eval('local route_utils = require("app.utils.route_utils"); return route_utils.get_bucket_id("hash_testing", { 100, "тесты", 10, 1 }, 30000)')
     t.assert_equals(err, nil)
-    t.assert_equals(r, 17338)
+    t.assert_equals(r, 17339)
 end
 

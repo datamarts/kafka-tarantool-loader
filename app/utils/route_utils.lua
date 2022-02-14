@@ -12,7 +12,6 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 
-local digest = require("digest")
 local schema_utils = require("app.utils.schema_utils")
 local config_utils = require("app.utils.config_utils")
 local routes = {}
@@ -41,19 +40,18 @@ local function get_topic_success()
     return topic_success
 end
 
-local function get_bucket_id(space_name, tuple, bucket_count, is_record_type)
+local function get_bucket_id(space_name, tuple, bucket_count, is_record_type) -- luacheck: no unused args
     checks("string", "cdata|table", "number", "?boolean")
     is_record_type = is_record_type or false
 
-    local c = digest.murmur.new({seed = 0})
-
     local fields = schema_utils.get_bucket_id_fields(space_name, is_record_type)
 
+    local shard_val = ''
     for _, key in ipairs(fields) do
-        c:update(tostring(tuple[key]))
+        shard_val = shard_val .. tostring(tuple[key])
     end
 
-    return math.fmod(c:result(), bucket_count)
+    return box.func["sbroad.calculate_bucket_id"]:call({ shard_val })
 end
 
 local function set_bucket_id(space_name, tuple, bucket_count, is_record_type)
