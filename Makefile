@@ -13,14 +13,14 @@ dev_deps:
 	docker-compose -f dev/docker-compose-dev.yml up -d
 
 build:
-	$(CMD) /bin/bash -c "cd /sbroad/; git pull; cargo build; cd /memstore; cartridge build; cp /kafka/kafka/tntkafka.so /memstore/.rocks/lib/tarantool/kafka/tntkafka.so; cp /sbroad/target/debug/libsbroad.so /memstore/.rocks/lib/tarantool/sql_parser.so"
+	$(CMD) /bin/bash -c "cd /sbroad/; git pull; cargo build --release; cd /memstore; cartridge build; cp /kafka/kafka/tntkafka.so /memstore/.rocks/lib/tarantool/kafka/tntkafka.so; cp /sbroad/target/debug/libsbroad.so /memstore/.rocks/lib/tarantool/sql_parser.so"
 
 run:
 	$(CMD) /bin/bash -c "cartridge start --debug"
 
 stop:
 	docker exec memstorage cartridge stop
-	
+
 release:
 	$(CMD) cartridge pack rpm . --version=$(shell find . -path '*.rockspec' -maxdepth 1 | sed -En 's/\.\/[a-z]*-(.*)\.[a-z]*/\1/p')
 
